@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './pages/__root'
 import { Route as PrivateLayoutRouteImport } from './pages/_private/layout'
+import { Route as AuthLayoutRouteImport } from './pages/_auth/layout'
 import { Route as AuthSignInRouteImport } from './pages/_auth/sign-in'
 import { Route as PrivateUsersIndexRouteImport } from './pages/_private/users/index'
 import { Route as PrivateNewslettersIndexRouteImport } from './pages/_private/newsletters/index'
@@ -24,10 +25,14 @@ const PrivateLayoutRoute = PrivateLayoutRouteImport.update({
   id: '/_private',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthSignInRoute = AuthSignInRouteImport.update({
-  id: '/_auth/sign-in',
-  path: '/sign-in',
+const AuthLayoutRoute = AuthLayoutRouteImport.update({
+  id: '/_auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthSignInRoute = AuthSignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => AuthLayoutRoute,
 } as any)
 const PrivateUsersIndexRoute = PrivateUsersIndexRouteImport.update({
   id: '/users/',
@@ -82,9 +87,9 @@ export interface FileRoutesByFullPath {
   '/articles/new/': typeof PrivateArticlesNewIndexRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof PrivateOverviewIndexRoute
   '/sign-in': typeof AuthSignInRoute
   '/articles/$slug': typeof PrivateArticlesSlugRoute
-  '/': typeof PrivateOverviewIndexRoute
   '/account': typeof PrivateAccountIndexRoute
   '/articles': typeof PrivateArticlesIndexRoute
   '/categories': typeof PrivateCategoriesIndexRoute
@@ -94,6 +99,7 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/_auth': typeof AuthLayoutRouteWithChildren
   '/_private': typeof PrivateLayoutRouteWithChildren
   '/_auth/sign-in': typeof AuthSignInRoute
   '/_private/articles/$slug': typeof PrivateArticlesSlugRoute
@@ -119,9 +125,9 @@ export interface FileRouteTypes {
     | '/articles/new/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/sign-in'
     | '/articles/$slug'
-    | '/'
     | '/account'
     | '/articles'
     | '/categories'
@@ -130,6 +136,7 @@ export interface FileRouteTypes {
     | '/articles/new'
   id:
     | '__root__'
+    | '/_auth'
     | '/_private'
     | '/_auth/sign-in'
     | '/_private/articles/$slug'
@@ -143,8 +150,8 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  AuthLayoutRoute: typeof AuthLayoutRouteWithChildren
   PrivateLayoutRoute: typeof PrivateLayoutRouteWithChildren
-  AuthSignInRoute: typeof AuthSignInRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -156,12 +163,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivateLayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthLayoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_auth/sign-in': {
       id: '/_auth/sign-in'
       path: '/sign-in'
       fullPath: '/sign-in'
       preLoaderRoute: typeof AuthSignInRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthLayoutRoute
     }
     '/_private/users/': {
       id: '/_private/users/'
@@ -222,6 +236,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthLayoutRouteChildren {
+  AuthSignInRoute: typeof AuthSignInRoute
+}
+
+const AuthLayoutRouteChildren: AuthLayoutRouteChildren = {
+  AuthSignInRoute: AuthSignInRoute,
+}
+
+const AuthLayoutRouteWithChildren = AuthLayoutRoute._addFileChildren(
+  AuthLayoutRouteChildren,
+)
+
 interface PrivateLayoutRouteChildren {
   PrivateArticlesSlugRoute: typeof PrivateArticlesSlugRoute
   PrivateOverviewIndexRoute: typeof PrivateOverviewIndexRoute
@@ -249,8 +275,8 @@ const PrivateLayoutRouteWithChildren = PrivateLayoutRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
+  AuthLayoutRoute: AuthLayoutRouteWithChildren,
   PrivateLayoutRoute: PrivateLayoutRouteWithChildren,
-  AuthSignInRoute: AuthSignInRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
