@@ -3,7 +3,6 @@ import { createRootRoute, HeadContent, Outlet } from "@tanstack/react-router";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { NotFound } from "./notfound";
 
 const RootLayout = () => (
 	<>
