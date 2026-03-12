@@ -17,7 +17,7 @@ function RouteComponent() {
 				description="Crie, edite e organize as categorias dos seus artigos"
 			/>
 
-			{isPending ? (
+			{isPending || !data ? (
 				<LoadingScreen />
 			) : (
 				<TableListCategories data={data} />
