@@ -1,5 +1,5 @@
 import { Check, Tags, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +22,7 @@ import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useSynchronizedArticleWithCategory } from "@/core/actions/article/toggle-synchronized-article-with-category";
 import { useQueryManyCategories } from "@/core/actions/category/query-many-categories";
 import type { Category } from "@/core/contracts/categories";
+import { cn } from "@/lib/utils";
 
 type CategorySelectorProps = {
 	articleSlug: string;
@@ -32,42 +33,74 @@ export function CategorySelector({
 	articleSlug,
 	categories: defaultCategories,
 }: CategorySelectorProps) {
+	const { data, isPending } = useQueryManyCategories();
+
+	if (isPending) return <div>loading...</div>;
+
+	return (
+		<CategoryContent
+			slug={articleSlug}
+			categories={data ?? []}
+			defaultCategories={defaultCategories}
+		/>
+	);
+}
+
+function CategoryContent({
+	slug,
+	categories,
+	defaultCategories,
+}: {
+	slug: string;
+	categories: Category[];
+	defaultCategories: string[];
+}) {
 	const [open, setOpen] = useState(false);
 	const [selectedIds, setSelectedIds] = useState<number[]>([]);
-
-	const { data: allCategories = [] } = useQueryManyCategories();
 	const { mutateAsync: syncCategory } = useSynchronizedArticleWithCategory();
 
+	const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+
+	const selectedCategories = useMemo(
+		() => categories.filter((c) => selectedSet.has(c.id)),
+		[categories, selectedSet],
+	);
+
 	useEffect(() => {
-		if (!allCategories.length) return;
+		if (!categories.length) return;
 
-		setSelectedIds(
-			allCategories
-				.filter((c) => defaultCategories.includes(c.name))
-				.map((c) => c.id),
-		);
-	}, [allCategories, defaultCategories]);
+		const initialSelected = categories
+			.filter((c) => defaultCategories.includes(c.name))
+			.map((c) => c.id);
 
-	const selectedSet = new Set(selectedIds);
+		setSelectedIds(initialSelected);
+	}, [categories, defaultCategories]);
 
-	const handleToggleCategory = async (categoryId: number) => {
-		const isSelected = selectedSet.has(categoryId);
+	const handleToggleCategory = useCallback(
+		async (categoryId: number) => {
+			const isSelected = selectedSet.has(categoryId);
 
-		await syncCategory({
-			action: isSelected ? "resync" : "sync",
-			slug: articleSlug,
-			categoryId,
-		});
+			setSelectedIds((prev) =>
+				isSelected
+					? prev.filter((id) => id !== categoryId)
+					: [...prev, categoryId],
+			);
 
-		setSelectedIds((prev) =>
-			isSelected
-				? prev.filter((id) => id !== categoryId)
-				: [...prev, categoryId],
-		);
-	};
-
-	const selectedCategories = allCategories.filter((c) =>
-		selectedSet.has(c.id),
+			try {
+				await syncCategory({
+					action: isSelected ? "resync" : "sync",
+					slug,
+					categoryId,
+				});
+			} catch {
+				setSelectedIds((prev) =>
+					isSelected
+						? [...prev, categoryId]
+						: prev.filter((id) => id !== categoryId),
+				);
+			}
+		},
+		[selectedSet, slug, syncCategory],
 	);
 
 	return (
@@ -133,7 +166,7 @@ export function CategorySelector({
 						</CommandEmpty>
 
 						<CommandGroup>
-							{allCategories.map((category: Category) => {
+							{categories.map((category) => {
 								const isSelected = selectedSet.has(category.id);
 
 								return (
@@ -145,11 +178,10 @@ export function CategorySelector({
 										className="flex justify-between cursor-pointer rounded-none"
 									>
 										<span
-											className={
-												isSelected
-													? "font-medium"
-													: "text-muted-foreground"
-											}
+											className={cn(
+												"text-muted-foreground",
+												isSelected && "font-medium",
+											)}
 										>
 											{category.name}
 										</span>

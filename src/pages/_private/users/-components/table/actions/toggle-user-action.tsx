@@ -18,6 +18,7 @@ import { useToggleUserStatus } from "@/core/actions/users/toggle-user-status";
 interface ToggleUserActionProps {
 	id: number;
 	variant: "disable" | "restore";
+	disabled?: boolean;
 }
 
 const CONFIG = {
@@ -38,7 +39,11 @@ const CONFIG = {
 	},
 } as const;
 
-export function ToggleUserAction({ id, variant }: ToggleUserActionProps) {
+export function ToggleUserAction({
+	id,
+	variant,
+	disabled = false,
+}: ToggleUserActionProps) {
 	const { mutateAsync } = useToggleUserStatus();
 	const {
 		icon: Icon,
@@ -60,6 +65,7 @@ export function ToggleUserAction({ id, variant }: ToggleUserActionProps) {
 				<DropdownMenuItem
 					onSelect={(e) => e.preventDefault()}
 					className="rounded-none"
+					disabled={disabled}
 				>
 					<Icon className="h-4 w-4" />
 					<span>{trigger}</span>

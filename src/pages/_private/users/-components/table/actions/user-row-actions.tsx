@@ -12,12 +12,11 @@ export function UserRowActions({ row }: { row: User }) {
 		<MoreActions>
 			<UpdateMoreAction data={row} />
 
-			{!isCurrentUser && (
-				<ToggleUserAction
-					id={row.id}
-					variant={row.is_deactivated ? "restore" : "disable"}
-				/>
-			)}
+			<ToggleUserAction
+				id={row.id}
+				variant={row.is_deactivated ? "restore" : "disable"}
+				disabled={isCurrentUser}
+			/>
 		</MoreActions>
 	);
 }

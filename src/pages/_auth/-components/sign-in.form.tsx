@@ -15,9 +15,10 @@ import {
 	type SignInSchemaValues,
 	signInSchema,
 } from "@/core/schemas/auth/sign-in.schema";
+import { toast } from "sonner";
 
 export function SignInForm() {
-	const { data: user, mutateAsync } = useSignIn();
+	const { mutateAsync } = useSignIn();
 	const form = useForm({
 		resolver: zodResolver(signInSchema),
 		defaultValues: {
@@ -30,7 +31,11 @@ export function SignInForm() {
 		await mutateAsync({
 			email: formData.email,
 			password: formData.password,
-		});
+		}, { onSuccess() {
+			toast.success("Login realizado com sucesso.")
+		}, onError() {
+			toast.error("Credenciais inválidas.")
+		}});
 	};
 	return (
 		<form onSubmit={form.handleSubmit(onSubmit)}>

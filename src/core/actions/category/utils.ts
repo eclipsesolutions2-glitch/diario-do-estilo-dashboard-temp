@@ -1,8 +1,10 @@
+import type { Category } from "@/core/contracts/categories";
 import type { CreateCategorySchemaValues } from "@/core/schemas/categories/create.schema";
 import type { UpdateCategorySchemaValues } from "@/core/schemas/categories/update.schema";
 import { axios } from "@/lib/axios";
+import type { AxiosPromise } from "axios";
 
-export const findMayCategoriesFn = async () => {
+export const findMayCategoriesFn = async (): AxiosPromise<Category[]> => {
 	return await axios("/admin/categories");
 };
 
